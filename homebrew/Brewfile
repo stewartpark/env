@@ -24,6 +24,7 @@ brew "wget"
 
 # Zsh plugins
 brew "zsh-syntax-highlighting"
+brew "zsh-autosuggestions"
 
 # GitHub CLI (optional but useful)
 brew "gh"

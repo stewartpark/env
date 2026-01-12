@@ -4,6 +4,23 @@
 fpath=(~/.local/share/zsh/site-functions $fpath)
 autoload -U compinit && compinit
 
+# Completion options
+setopt COMPLETE_IN_WORD     # Complete from both ends of word
+setopt ALWAYS_TO_END        # Move cursor to end after completion
+setopt AUTO_MENU            # Show completion menu on successive tab press
+setopt AUTO_LIST            # Automatically list choices on ambiguous completion
+setopt AUTO_PARAM_SLASH     # Add trailing slash for directory completions
+
+# Completion styling
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'  # Case-insensitive, partial-word completion
+zstyle ':completion:*' menu select  # Enable menu selection with arrow keys
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"  # Colored completions matching ls colors
+zstyle ':completion:*' group-name ''  # Group completions by type
+zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'  # Add descriptions
+zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'  # Better no-match message
+zstyle ':completion:*' use-cache on  # Enable completion caching
+zstyle ':completion:*' cache-path ~/.zsh/cache  # Cache location
+
 # ============================================================================
 # History Configuration
 # ============================================================================
@@ -14,6 +31,14 @@ setopt SHARE_HISTORY
 setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 setopt HIST_VERIFY
+
+# History search with arrow keys
+autoload -U up-line-or-beginning-search
+autoload -U down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey "^[[A" up-line-or-beginning-search    # Up arrow
+bindkey "^[[B" down-line-or-beginning-search  # Down arrow
 
 # ============================================================================
 # Shell Options
@@ -92,8 +117,20 @@ gpg-connect-agent updatestartuptty /bye >/dev/null 2>&1
 eval "$(mise activate zsh)"
 
 # ============================================================================
-# Syntax Highlighting
+# Zsh Plugins
 # ============================================================================
+# Source zsh-autosuggestions (shows ghost text from history)
+if [[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+elif [[ -f /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+elif [[ -f /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    source /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
+
+# Configure autosuggestions
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)  # Suggest from history first, then completions
+
 # Source zsh-syntax-highlighting (must be at end)
 if [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
     source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
