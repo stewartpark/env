@@ -9,13 +9,37 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Script directory
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE_DIR="$(dirname "$DOTFILES_DIR")"
-
 echo -e "${BLUE}====================================${NC}"
 echo -e "${BLUE}  Environment Setup - Multi-Stage${NC}"
 echo -e "${BLUE}====================================${NC}"
+echo ""
+
+# ============================================================================
+# Repository Setup
+# ============================================================================
+REPO_URL="https://github.com/stewartpark/env.git"
+WORKSPACE_DIR="$HOME/workspace"
+DOTFILES_DIR="$WORKSPACE_DIR/env"
+
+# Check if repository exists
+if [[ -d "$DOTFILES_DIR/.git" ]]; then
+    echo -e "${GREEN}✓ Repository already exists at $DOTFILES_DIR${NC}"
+    cd "$DOTFILES_DIR"
+
+    # Pull latest changes
+    echo -e "${YELLOW}Checking for updates...${NC}"
+    git pull
+else
+    # Create workspace directory and clone
+    echo -e "${YELLOW}Creating workspace directory...${NC}"
+    mkdir -p "$WORKSPACE_DIR"
+
+    echo -e "${YELLOW}Cloning repository to $DOTFILES_DIR...${NC}"
+    git clone "$REPO_URL" "$DOTFILES_DIR"
+    cd "$DOTFILES_DIR"
+    echo -e "${GREEN}✓ Repository cloned${NC}"
+fi
+
 echo ""
 
 # ============================================================================
@@ -212,6 +236,19 @@ else
     else
         echo -e "${RED}✗ Connection failed. You may need to check your key.${NC}"
     fi
+fi
+
+echo ""
+
+# Switch git remote from HTTPS to SSH for future operations
+echo -e "${YELLOW}Updating git remote to use SSH...${NC}"
+cd "$DOTFILES_DIR"
+CURRENT_REMOTE=$(git remote get-url origin)
+if [[ "$CURRENT_REMOTE" == https://* ]]; then
+    git remote set-url origin "git@github.com:stewartpark/env.git"
+    echo -e "${GREEN}✓ Git remote updated to SSH${NC}"
+else
+    echo -e "${GREEN}✓ Git remote already using SSH${NC}"
 fi
 
 echo ""
