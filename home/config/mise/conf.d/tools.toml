@@ -1,0 +1,6 @@
+# Tool-specific configurations
+# Add any tool-specific settings here
+
+# Example:
+# [tools.node]
+# install_args = ["--with-intl=full-icu"]

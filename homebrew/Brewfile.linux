@@ -1,0 +1,17 @@
+# Linux-specific packages
+
+# GPG pinentry for terminal
+brew "pinentry-curses"
+
+# Kitty terminal (may also be installed via system package manager)
+# If kitty is available via apt/dnf, install it there instead for better integration
+# brew "kitty"
+
+# Note: D2Coding Nerd Font installation for Linux
+# Option 1: Download from https://github.com/ryanoasis/nerd-fonts/releases
+# Option 2: Install via system package manager if available
+#   Debian/Ubuntu: apt install fonts-d2coding
+#   Fedora/RHEL: check dnf for available packages
+# Option 3: Manual install to ~/.local/share/fonts/ then run: fc-cache -fv
+
+# Add other Linux-specific CLI tools here

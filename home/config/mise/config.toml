@@ -1,0 +1,18 @@
+# mise global configuration
+# Language runtime versions
+
+[tools]
+node = "lts"
+python = "3.12"
+rust = "latest"
+go = "latest"
+java = "21"
+scala = "3"
+ruby = "latest"
+
+[settings]
+# Enable reading version files from other tools
+legacy_version_file = true
+always_keep_download = false
+always_keep_install = false
+verbose = false

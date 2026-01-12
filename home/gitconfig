@@ -1,0 +1,48 @@
+[user]
+	email = hello@stewartjpark.com
+	name = Stewart Park
+	signingkey = B85463C5
+
+[push]
+	default = simple
+
+[pull]
+	rebase = false
+
+[commit]
+	gpgsign = true
+
+[core]
+	excludesfile = ~/.gitignore_global
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	dark = true
+
+[diff]
+	compactionHeuristic = true
+
+[merge]
+	conflictStyle = zdiff3
+
+[url "ssh://git@github.com/"]
+    insteadOf = https://github.com/
+
+[github]
+	user = stewartpark
+
+[init]
+	defaultBranch = main
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
+[safe]
+	directory = *

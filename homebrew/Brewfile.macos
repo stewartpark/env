@@ -1,0 +1,12 @@
+# macOS-specific packages
+
+# Terminal emulator
+cask "kitty"
+
+# GPG pinentry for macOS with Keychain integration
+brew "pinentry-mac"
+
+# Fonts
+cask "font-d2coding-nerd-font"
+
+# Add other macOS-specific GUI apps here

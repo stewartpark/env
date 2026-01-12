@@ -1,0 +1,28 @@
+# Common packages for all platforms
+
+# Version control and security
+brew "git"
+brew "git-lfs"
+brew "git-crypt"
+brew "git-delta"
+
+# Dotfiles management
+brew "rcm"
+
+# Development tools
+brew "mise"
+brew "gnupg"
+brew "neovim"
+
+# Modern CLI tools
+brew "ripgrep"
+brew "fd"
+brew "bat"
+brew "curl"
+brew "wget"
+
+# Zsh plugins
+brew "zsh-syntax-highlighting"
+
+# GitHub CLI (optional but useful)
+brew "gh"

@@ -1,0 +1,31 @@
+# Default settings for all hosts
+Host *
+    # Use GPG agent for SSH authentication
+    # Uncomment the following line after GPG agent is configured for SSH
+    # IdentityAgent ~/.gnupg/S.gpg-agent.ssh
+
+    # Security settings
+    AddKeysToAgent yes
+
+    # macOS Keychain integration (macOS only, ignored on Linux)
+    UseKeychain yes
+
+    # Connection settings
+    ServerAliveInterval 60
+    ServerAliveCountMax 5
+
+    # Compression
+    Compression yes
+
+    # Reuse connections for better performance
+    ControlMaster auto
+    ControlPath ~/.ssh/sockets/%r@%h-%p
+    ControlPersist 600
+
+# Example host configuration
+# Uncomment and customize for your servers
+# Host example
+#     HostName example.com
+#     User myusername
+#     Port 22
+#     IdentityFile ~/.ssh/id_ed25519

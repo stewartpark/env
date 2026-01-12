@@ -1,0 +1,109 @@
+# ============================================================================
+# Completion Setup
+# ============================================================================
+fpath=(~/.local/share/zsh/site-functions $fpath)
+autoload -U compinit && compinit
+
+# ============================================================================
+# History Configuration
+# ============================================================================
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_VERIFY
+
+# ============================================================================
+# Shell Options
+# ============================================================================
+setopt AUTO_CD              # cd by typing directory name
+setopt CORRECT              # Suggest corrections for typos
+setopt NO_CASE_GLOB         # Case insensitive globbing
+setopt NUMERIC_GLOB_SORT    # Sort filenames numerically
+setopt PROMPT_SUBST         # Enable prompt substitution
+
+# ============================================================================
+# Prompt Configuration
+# ============================================================================
+# Load vcs_info for git branch display
+autoload -Uz vcs_info
+
+# Configure vcs_info for git
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:git:*' formats ' %F{cyan}(%b)%f'
+zstyle ':vcs_info:git:*' actionformats ' %F{cyan}(%b|%a)%f'
+
+# Track command execution time
+preexec() {
+    cmd_start_time=$SECONDS
+}
+
+precmd() {
+    # Update vcs_info
+    vcs_info
+
+    # Build right prompt with current time (12-hour format with AM/PM)
+    RPROMPT='%F{yellow}%@%f'
+
+    # Calculate and add elapsed time if command was run
+    if [[ -n $cmd_start_time ]]; then
+        local elapsed=$((SECONDS - cmd_start_time))
+        if (( elapsed > 0 )); then
+            RPROMPT+=" %F{cyan}⏱ ${elapsed}s%f"
+        fi
+        unset cmd_start_time
+    fi
+
+    # Add exit code if command failed
+    RPROMPT+='%(?.. %F{red}✘ %?%f)'
+}
+
+# Build the prompt
+# Format: [user@host] directory (git-branch)
+# ❯
+PROMPT='%F{blue}[%n@%m]%f %F{green}%~%f${vcs_info_msg_0_}
+%F{magenta}❯%f '
+
+# ============================================================================
+# Aliases
+# ============================================================================
+alias ls='ls --color=auto'
+alias ll='ls -lah'
+alias la='ls -A'
+alias grep='grep --color=auto'
+
+# ============================================================================
+# GPG Agent & SSH Support
+# ============================================================================
+# Start GPG agent if not already running
+export GPG_TTY=$(tty)
+
+# Use GPG agent for SSH authentication
+export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+
+# Refresh GPG agent TTY
+gpg-connect-agent updatestartuptty /bye >/dev/null 2>&1
+
+# ============================================================================
+# mise Activation (near end)
+# ============================================================================
+eval "$(mise activate zsh)"
+
+# ============================================================================
+# Syntax Highlighting
+# ============================================================================
+# Source zsh-syntax-highlighting (must be at end)
+if [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [[ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [[ -f /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
+# ============================================================================
+# Custom Functions & Overrides
+# ============================================================================
+# Add any custom functions here

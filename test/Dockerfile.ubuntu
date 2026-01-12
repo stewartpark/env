@@ -1,0 +1,88 @@
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TERM=xterm-256color
+
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    procps \
+    curl \
+    file \
+    git \
+    sudo \
+    locales \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up locale
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Create non-root user (matches real-world usage)
+RUN useradd -m -s /bin/bash -G sudo testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Switch to non-root user
+USER testuser
+WORKDIR /home/testuser
+
+# Copy dotfiles repo
+COPY --chown=testuser:testuser . /home/testuser/Workspace/env
+
+# Install Homebrew
+RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
+    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/testuser/.profile
+
+# Set up Homebrew in current shell and install packages
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && \
+    cd /home/testuser/Workspace/env && \
+    brew bundle --file="homebrew/Brewfile" && \
+    brew bundle --file="homebrew/Brewfile.linux"
+
+# Set up dotfiles with rcm
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && \
+    rcup -d /home/testuser/Workspace/env/home -f -v
+
+# Create required directories
+RUN mkdir -p /home/testuser/.ssh/sockets && \
+    mkdir -p /home/testuser/.local/share/zsh/site-functions
+
+# Set permissions
+RUN chmod 700 /home/testuser/.gnupg 2>/dev/null || true && \
+    chmod 700 /home/testuser/.ssh
+
+# Configure GPG agent
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && \
+    if command -v pinentry-curses >/dev/null 2>&1; then \
+        PINENTRY_PATH="$(command -v pinentry-curses)"; \
+    else \
+        PINENTRY_PATH="/usr/bin/pinentry-curses"; \
+    fi && \
+    mkdir -p /home/testuser/.gnupg && \
+    echo "pinentry-program $PINENTRY_PATH" > /home/testuser/.gnupg/gpg-agent.conf && \
+    echo "enable-ssh-support" >> /home/testuser/.gnupg/gpg-agent.conf && \
+    echo "default-cache-ttl 600" >> /home/testuser/.gnupg/gpg-agent.conf && \
+    echo "max-cache-ttl 7200" >> /home/testuser/.gnupg/gpg-agent.conf && \
+    chmod 600 /home/testuser/.gnupg/gpg-agent.conf
+
+# Install mise runtimes
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && \
+    mise install || echo "Warning: Some mise installations may have failed"
+
+# Generate mise completions
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && \
+    mise completion zsh > /home/testuser/.local/share/zsh/site-functions/_mise
+
+# Install zsh and set as default shell
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && \
+    brew install zsh || true
+
+# Copy test script
+COPY --chown=testuser:testuser test/integration.sh /home/testuser/integration.sh
+RUN chmod +x /home/testuser/integration.sh
+
+# Run tests
+CMD ["/bin/bash", "/home/testuser/integration.sh"]

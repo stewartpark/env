@@ -1,0 +1,33 @@
+# Mac
+.DS_Store
+
+# Ctags
+[Tt][Aa][Gg][Ss]
+
+# Vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# pyenv
+.python-version
+
+# rbenv
+.ruby-version
+
+# Ruby
+.bundle
+.byebug_history
+
+# Nodejs
+npm-debug.log
+
+# VSCode
+.vscode
+
+# Claude
+.claude
