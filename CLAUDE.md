@@ -4,7 +4,19 @@ This document contains technical knowledge about this dotfiles repository for fu
 
 ## Project Overview
 
-This is a cross-platform dotfiles and environment setup repository that supports macOS (Intel & Apple Silicon) and Linux (Debian/Ubuntu, RHEL/Fedora). It uses a multi-stage installation process to set up a complete development environment with Docker-based testing for Linux environments.
+This is a cross-platform dotfiles and environment setup repository that supports macOS (Apple Silicon) and Linux (Debian/Ubuntu, RHEL/Fedora). It uses a multi-stage installation process to set up a complete development environment with Docker-based testing for Linux environments.
+
+The repository can be installed with a single command:
+```bash
+curl -fsSL https://raw.githubusercontent.com/stewartpark/env/main/install.sh | bash
+```
+
+This will:
+1. Clone the repository to `~/workspace/env`
+2. Install Homebrew and all packages
+3. Symlink dotfiles using rcm with platform-specific configurations
+4. Set up SSH keys and configure GitHub access
+5. Optionally clone and unlock secrets repository
 
 ## Repository Structure
 
@@ -21,7 +33,14 @@ env/
 │   │   │   ├── config.toml        # Global mise runtime versions
 │   │   │   └── conf.d/            # Additional mise configs
 │   │   └── kitty/                 # Kitty terminal config
-│   ├── gnupg/                     # GPG configuration
+│   ├── gnupg/                     # GPG configuration (common)
+│   │   └── gpg.conf
+│   ├── tag-macos/                 # macOS-specific dotfiles
+│   │   └── gnupg/
+│   │       └── gpg-agent.conf     # macOS GPG agent (pinentry-mac)
+│   ├── tag-linux/                 # Linux-specific dotfiles
+│   │   └── gnupg/
+│   │       └── gpg-agent.conf     # Linux GPG agent (pinentry-curses)
 │   ├── ssh/                       # SSH configuration
 │   └── claude/                    # Claude Code configuration
 ├── homebrew/                      # Package definitions
@@ -45,7 +64,7 @@ env/
 - **`.zprofile`** (login shell): Sets up Homebrew PATH for all platforms
   - Runs BEFORE `.zshrc`
   - Must be sourced first to make `brew` commands available
-  - Handles macOS (Apple Silicon at `/opt/homebrew`, Intel at `/usr/local`) and Linux (`/home/linuxbrew`)
+  - Handles macOS (Apple Silicon at `/opt/homebrew`) and Linux (`/home/linuxbrew`)
 
 - **`.zshrc`** (interactive shell): Configures shell features, prompt, tools
   - Assumes Homebrew is already in PATH
@@ -71,18 +90,28 @@ Uses `rcm` (Thoughtbot's dotfile manager):
 - Dotfiles live in `home/` directory
 - `rcup` creates symlinks from `~/.zshrc` → `home/zshrc`
 - Convention: no leading dots in `home/` directory, rcm adds them
+- **Platform-specific configs** use rcm tags:
+  - `tag-macos/` - macOS-specific files (installed with `rcup -t macos`)
+  - `tag-linux/` - Linux-specific files (installed with `rcup -t linux`)
+  - Currently used for GPG agent configuration (different pinentry programs per platform)
 
 ## Installation Stages
 
 The `install.sh` script has 4 stages:
 
+### Stage 0: Repository Setup (for curl pipe installation)
+- Creates `~/workspace` directory if needed
+- Clones repository to `~/workspace/env` (or updates if already exists)
+- Uses HTTPS for initial clone (no SSH keys yet)
+- Changes to repository directory for remaining stages
+
 ### Stage 1: Base Installation
 - Install Homebrew (if needed)
 - Install packages from Brewfiles
-- Symlink dotfiles with rcm
+- Symlink dotfiles with rcm using platform-specific tag (`-t macos` or `-t linux`)
 - Create required directories (`~/.ssh/sockets`, `~/.local/share/zsh/site-functions`)
-- Configure GPG agent with platform-specific pinentry
-- Install mise runtimes
+- Restart GPG agent to pick up new configuration
+- Install mise runtimes (if config exists)
 - Generate mise completions
 
 ### Stage 2: SSH Key Setup
@@ -90,6 +119,7 @@ The `install.sh` script has 4 stages:
 - Generate new key if needed
 - Test GitHub authentication
 - Interactive prompts for key registration
+- **Switch git remote from HTTPS to SSH** for future operations
 
 ### Stage 3: Secrets Repository
 - Clone `env-secrets` repository (git-crypt encrypted)
@@ -113,9 +143,15 @@ The install script detects platform using:
 
 ### GPG Setup
 - GPG agent provides SSH authentication via `SSH_AUTH_SOCK`
-- macOS uses `pinentry-mac` (with Keychain integration)
-- Linux uses `pinentry-curses`
+- Platform-specific pinentry programs configured via rcm tags:
+  - macOS (Apple Silicon): `pinentry-mac` at `/opt/homebrew/bin/pinentry-mac` (with Keychain integration)
+  - Linux: `pinentry-curses` at `/usr/bin/pinentry-curses`
+- Configuration files:
+  - Common: `home/gnupg/gpg.conf`
+  - macOS-specific: `home/tag-macos/gnupg/gpg-agent.conf`
+  - Linux-specific: `home/tag-linux/gnupg/gpg-agent.conf`
 - GPG_TTY is set for proper terminal interaction
+- No sed-based file editing needed - rcm tags handle platform differences
 
 ### mise (Runtime Manager)
 - Replaces asdf/rbenv/nvm/etc.
@@ -188,8 +224,6 @@ The Dockerfile can be integrated into CI/CD:
    ```bash
    eval "$(/opt/homebrew/bin/brew shellenv)"  # macOS Apple Silicon
    # OR
-   eval "$(/usr/local/bin/brew shellenv)"     # macOS Intel
-   # OR
    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # Linux
 
    brew bundle --file="homebrew/Brewfile"
@@ -222,11 +256,13 @@ The Dockerfile can be integrated into CI/CD:
 
 ## Best Practices
 
-1. **Never modify `~/.zshrc` directly** - edit `home/zshrc` and re-run `rcup`
+1. **Never modify `~/.zshrc` directly** - edit `home/zshrc` and re-run `rcup -t <platform>`
 2. **Keep Homebrew setup in `.zprofile`** - don't duplicate in `.zshrc`
 3. **Test on both platforms** when adding packages
 4. **Use standard naming** - `Brewfile`, not `.Brewfile`
 5. **Respect shell init order** - login shell (`.zprofile`) before interactive (`.zshrc`)
+6. **Use rcm tags for platform-specific configs** - don't use sed or manual file editing in install.sh
+7. **Run rcup with platform tag** - `rcup -t macos` or `rcup -t linux` to get platform-specific files
 
 ## Dependencies
 
