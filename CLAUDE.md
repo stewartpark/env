@@ -141,15 +141,28 @@ The install script detects platform using:
 
 ## Common Tools & Configurations
 
+### SSH Configuration
+- Configuration file: `home/ssh/config` (symlinked to `~/.ssh/config`)
+- GPG agent integration via `IdentityAgent ~/.gnupg/S.gpg-agent.ssh`
+- Automatic key management with `AddKeysToAgent yes`
+- macOS Keychain integration via `UseKeychain yes` (ignored on Linux)
+- Connection multiplexing for better performance (ControlMaster/ControlPath)
+- Keepalive settings prevent connection timeouts
+
 ### GPG Setup
 - GPG agent provides SSH authentication via `SSH_AUTH_SOCK`
 - Platform-specific pinentry programs configured via rcm tags:
   - macOS (Apple Silicon): `pinentry-mac` at `/opt/homebrew/bin/pinentry-mac` (with Keychain integration)
   - Linux: `pinentry-curses` at `/usr/bin/pinentry-curses`
 - Configuration files:
-  - Common: `home/gnupg/gpg.conf`
+  - Common: `home/gnupg/gpg.conf` - strong algorithms, TOFU+PGP trust model
   - macOS-specific: `home/tag-macos/gnupg/gpg-agent.conf`
   - Linux-specific: `home/tag-linux/gnupg/gpg-agent.conf`
+- GPG agent features:
+  - SSH support enabled for key management
+  - Secure PIN entry with keyboard grab
+  - Configurable cache timeouts (10min general, 30min SSH)
+  - Loopback pinentry for browser extensions
 - GPG_TTY is set for proper terminal interaction
 - No sed-based file editing needed - rcm tags handle platform differences
 
