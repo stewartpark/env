@@ -247,27 +247,55 @@ echo ""
 SECRETS_REPO_URL="git@github.com:stewartpark/env-secrets.git"
 SECRETS_DIR="$DOTFILES_DIR/secrets"
 
+# Check if secrets repository exists and is unlocked
+SECRETS_UNLOCKED=false
 if [[ -d "$SECRETS_DIR" ]]; then
     echo -e "${GREEN}✓ Secrets repository already cloned${NC}"
+
+    # Check if git-crypt is already unlocked
+    cd "$SECRETS_DIR"
+    if git-crypt status &>/dev/null && ! git-crypt status 2>&1 | grep -q "not encrypted"; then
+        # Repository has git-crypt but check if it's unlocked
+        if git-crypt status 2>&1 | grep -q "encrypted"; then
+            echo -e "${YELLOW}⚠ Secrets repository is locked${NC}"
+        else
+            SECRETS_UNLOCKED=true
+            echo -e "${GREEN}✓ Secrets repository already unlocked${NC}"
+        fi
+    else
+        SECRETS_UNLOCKED=true
+        echo -e "${GREEN}✓ Secrets repository already unlocked${NC}"
+    fi
+    cd "$DOTFILES_DIR"
 else
     echo -e "${YELLOW}Cloning secrets repository...${NC}"
     git clone "$SECRETS_REPO_URL" "$SECRETS_DIR"
     echo -e "${GREEN}✓ Secrets repository cloned${NC}"
 fi
 
-# Unlock git-crypt
-echo ""
-echo -e "${YELLOW}Enter the path to your git-crypt key file:${NC}"
-echo -e "${BLUE}(Usually in Google Drive or a secure location)${NC}"
-read -p "Path: " git_crypt_key
+# Only prompt for unlock if needed
+if ! $SECRETS_UNLOCKED; then
+    # Unlock git-crypt
+    echo ""
+    echo -e "${YELLOW}Enter the path to your git-crypt key file:${NC}"
+    echo -e "${BLUE}(Usually in Google Drive or a secure location)${NC}"
+    read -p "Path: " git_crypt_key
 
-if [[ -f "$git_crypt_key" ]]; then
-    echo -e "${YELLOW}Unlocking git-crypt...${NC}"
+    if [[ -f "$git_crypt_key" ]]; then
+        echo -e "${YELLOW}Unlocking git-crypt...${NC}"
+        cd "$SECRETS_DIR"
+        git-crypt unlock "$git_crypt_key"
+        echo -e "${GREEN}✓ git-crypt unlocked${NC}"
+        cd "$DOTFILES_DIR"
+    else
+        echo -e "${RED}✗ git-crypt key file not found${NC}"
+        echo -e "${YELLOW}Skipping secrets repository unlock${NC}"
+    fi
+fi
+
+# Import GPG keys if secrets are unlocked
+if [[ -d "$SECRETS_DIR" ]]; then
     cd "$SECRETS_DIR"
-    git-crypt unlock "$git_crypt_key"
-    echo -e "${GREEN}✓ git-crypt unlocked${NC}"
-
-    # Import GPG keys
     GPG_KEY_ID="B85463C5"
 
     # Check if key already exists
@@ -297,9 +325,7 @@ if [[ -f "$git_crypt_key" ]]; then
             echo -e "${YELLOW}⚠ GPG keys not found in secrets repo${NC}"
         fi
     fi
-else
-    echo -e "${RED}✗ git-crypt key file not found${NC}"
-    echo -e "${YELLOW}Skipping secrets repository unlock${NC}"
+    cd "$DOTFILES_DIR"
 fi
 
 echo ""

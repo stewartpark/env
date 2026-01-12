@@ -122,10 +122,11 @@ The `install.sh` script has 4 stages:
 - **Switch git remote from HTTPS to SSH** for future operations
 
 ### Stage 3: Secrets Repository
-- Clone `env-secrets` repository (git-crypt encrypted)
-- Unlock git-crypt with user's key file
-- Import GPG keys
-- Set trust levels
+- Clone `env-secrets` repository (git-crypt encrypted) if not already present
+- Check if repository is already unlocked using `git-crypt status`
+- **Only prompt for git-crypt key if secrets are locked** (skips prompt when already unlocked)
+- Import GPG keys if not already imported
+- Set trust levels (interactive step if keys are newly imported)
 
 ### Stage 4: Finalization
 - Set zsh as default shell
@@ -260,6 +261,21 @@ The Dockerfile can be integrated into CI/CD:
 
 **Solution**: The Dockerfile uses `|| echo "Warning: ..."` to continue on failure. Check which specific runtime failed and investigate build logs.
 
+### Secrets repository is locked after cloning
+
+**Cause**: The git-crypt key hasn't been provided or the repository needs to be unlocked.
+
+**Solution**:
+1. Re-run `install.sh` - it will detect the locked state and prompt for the key
+2. Or manually unlock: `cd ~/workspace/env/secrets && git-crypt unlock /path/to/key`
+3. To check lock status: `cd ~/workspace/env/secrets && git-crypt status`
+
+### Install script still prompts for secrets key even though they're unlocked
+
+**Cause**: The `git-crypt status` check may have failed or returned unexpected output.
+
+**Solution**: Verify secrets are actually unlocked by checking if files in the secrets directory are readable. If truly unlocked but still prompting, there may be an issue with the git-crypt status detection logic.
+
 ## Git Strategy
 
 - Main branch: `main`
@@ -276,6 +292,7 @@ The Dockerfile can be integrated into CI/CD:
 5. **Respect shell init order** - login shell (`.zprofile`) before interactive (`.zshrc`)
 6. **Use rcm tags for platform-specific configs** - don't use sed or manual file editing in install.sh
 7. **Run rcup with platform tag** - `rcup -t macos` or `rcup -t linux` to get platform-specific files
+8. **Re-run install.sh safely** - all stages are idempotent and can be run multiple times; Stage 3 intelligently skips prompts when secrets are already unlocked
 
 ## Dependencies
 

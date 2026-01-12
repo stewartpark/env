@@ -18,6 +18,7 @@ brew "neovim"
 brew "ripgrep"
 brew "fd"
 brew "bat"
+brew "jq"
 brew "curl"
 brew "wget"
 
