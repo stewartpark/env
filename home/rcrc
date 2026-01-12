@@ -1,8 +1,0 @@
-# rcm configuration
-# This file tells rcup how to handle our dotfiles
-
-# Exclude these files/patterns from being symlinked
-EXCLUDES="README.md"
-
-# Tags can be used for host-specific configs (optional)
-# TAGS=""
