@@ -131,15 +131,10 @@ gpgconf --kill gpg-agent
 gpg-agent --daemon
 echo -e "${GREEN}✓ GPG agent restarted${NC}"
 
-# Install mise language runtimes (if config exists)
-if [[ -f .mise.toml ]] || [[ -f .tool-versions ]] || [[ -f ~/.mise.toml ]] || [[ -f ~/.tool-versions ]]; then
-    echo -e "${YELLOW}Installing mise language runtimes (this may take a while)...${NC}"
-    mise install
-    echo -e "${GREEN}✓ mise runtimes installed${NC}"
-else
-    echo -e "${YELLOW}⚠ No mise config found (.mise.toml or .tool-versions)${NC}"
-    echo -e "${YELLOW}  Skipping runtime installation. Add a config later and run 'mise install'${NC}"
-fi
+# Install mise language runtimes
+echo -e "${YELLOW}Installing mise language runtimes (this may take a while)...${NC}"
+mise install
+echo -e "${GREEN}✓ mise runtimes installed${NC}"
 
 # Generate mise completions
 echo -e "${YELLOW}Generating mise completions...${NC}"
