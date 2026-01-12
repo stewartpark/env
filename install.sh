@@ -104,9 +104,13 @@ else
 fi
 echo -e "${GREEN}✓ Packages installed${NC}"
 
-# Symlink dotfiles with rcm
+# Symlink dotfiles with rcm (platform-specific via tags)
 echo -e "${YELLOW}Symlinking dotfiles with rcm...${NC}"
-rcup -d "$DOTFILES_DIR/home" -f -v
+if [[ "$PLATFORM" == "macos" ]]; then
+    rcup -d "$DOTFILES_DIR/home" -t macos -f -v
+else
+    rcup -d "$DOTFILES_DIR/home" -t linux -f -v
+fi
 echo -e "${GREEN}✓ Dotfiles symlinked${NC}"
 
 # Create required directories
@@ -121,31 +125,11 @@ chmod 700 ~/.gnupg
 chmod 700 ~/.ssh
 echo -e "${GREEN}✓ Permissions set${NC}"
 
-# Update gpg-agent.conf with platform-specific pinentry
-echo -e "${YELLOW}Configuring GPG agent...${NC}"
-if [[ "$PLATFORM" == "macos" ]]; then
-    if [[ -f /opt/homebrew/bin/pinentry-mac ]]; then
-        PINENTRY_PATH="/opt/homebrew/bin/pinentry-mac"
-    else
-        PINENTRY_PATH="/usr/local/bin/pinentry-mac"
-    fi
-else
-    # Try to find pinentry-curses
-    if command -v pinentry-curses &> /dev/null; then
-        PINENTRY_PATH="$(command -v pinentry-curses)"
-    else
-        PINENTRY_PATH="/usr/bin/pinentry-curses"
-    fi
-fi
-
-# Update pinentry path in gpg-agent.conf
-sed -i.bak "s|^pinentry-program.*|pinentry-program $PINENTRY_PATH|" ~/.gnupg/gpg-agent.conf
-rm -f ~/.gnupg/gpg-agent.conf.bak
-
-# Restart gpg-agent
+# Restart GPG agent to pick up new config
+echo -e "${YELLOW}Restarting GPG agent...${NC}"
 gpgconf --kill gpg-agent
 gpg-agent --daemon
-echo -e "${GREEN}✓ GPG agent configured${NC}"
+echo -e "${GREEN}✓ GPG agent restarted${NC}"
 
 # Install mise language runtimes (if config exists)
 if [[ -f .mise.toml ]] || [[ -f .tool-versions ]] || [[ -f ~/.mise.toml ]] || [[ -f ~/.tool-versions ]]; then
