@@ -250,7 +250,7 @@ echo -e "${BLUE}========================================${NC}"
 echo ""
 
 SECRETS_REPO_URL="git@github.com:stewartpark/env-secrets.git"
-SECRETS_DIR="$WORKSPACE_DIR/env-secrets"
+SECRETS_DIR="$DOTFILES_DIR/secrets"
 
 if [[ -d "$SECRETS_DIR" ]]; then
     echo -e "${GREEN}✓ Secrets repository already cloned${NC}"
